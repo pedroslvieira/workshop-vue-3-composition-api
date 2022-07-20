@@ -32,6 +32,23 @@
         </div>
       </div>
     </div>
+    <div class="m-auto container flex flex-wrap mt-10">
+      <div
+        v-for="location in locations"
+        :key="location.id"
+        class="xl:w-1/5 lg:w-1/4 md:w-1/3 w-1/2 card"
+      >
+        <div class="card-inner">
+          <div class="content text-center mt-5" height="600" width="300">
+            <span class="header text-xl">{{ location.name }}</span>
+            <div class="text-center text-gray-500 text-sm">
+              <div class="">Type: {{ location.type }}</div>
+              <div>{{ location.dimension }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div v-if="loadingState === 'loading'" class="loading">
       <span class="text-gray-500">Loading characters...</span>
@@ -40,52 +57,36 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { useFetchResource } from "@/composables/useFetchResource";
+import { useGlobalEvent } from "@/composables/useGlobalEvent";
 import orderBy from "lodash/orderby";
-import { ref } from "vue";
-export default {
-  setup() {
-    const characters = ref([]);
-    const loadingState = ref(null);
-    const orderKey = ref("id");
+import { ref, computed, onMounted } from "vue";
 
-    const fetchAllCharacters = () => {
-      loadingState.value = "loading";
-      axios
-        .get("https://rickandmortyapi.com/api/character")
-        .then((response) => {
-          setTimeout(() => {
-            loadingState.value = "success";
-            characters.value = response.data.results;
-          }, 1000);
-        });
-    };
+const {
+  data: characters,
+  fetchResource: fetchAllCharacters,
+  loadingState,
+} = useFetchResource("https://rickandmortyapi.com/api/character");
 
-    const charactersOrdered = () => {
-      orderBy(characters.value, orderKey);
-    };
+const {
+  data: locations,
+  fetchResource: fetchLocations,
+  loadingState: loadingLocations,
+} = useFetchResource("https://rickandmortyapi.com/api/location");
 
-    const setOrderKey = (key) => {
-      orderKey.value = key;
-    };
 
-    return {
-      fetchAllCharacters,
-      setOrderKey,
-      charactersOrdered,
-      setOrderKey,
-      orderKey,
-      characters,
-      loadingState
-    }
+useGlobalEvent("click");
 
-  },
-  created() {
-    this.fetchAllCharacters();
-    this.charactersOrdered();
-  },
+const orderKey = ref("id");
+const charactersOrdered = computed(() => orderBy(characters.value, orderKey.value));
+
+const setOrderKey = (key) => {
+  orderKey.value = key;
 };
+
+fetchAllCharacters();
+fetchLocations();
 </script>
 
 <style scoped>
